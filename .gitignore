@@ -1,0 +1,37 @@
+# Model checkpoints (large binary files — host on Zenodo)
+checkpoints/models/*.pt
+
+# Patient data (cannot redistribute — PhysioNet DUA)
+checkpoints/splits/*.csv
+data/
+
+# Training logs
+logs/
+slurm_scripts/
+
+# Inference cache
+paper_figures/inference_cache/
+
+# Intermediate/exploratory results
+classification_results/
+classification_results_v2/
+results/metrics_*.csv
+results/ALL_metrics_multitask*.csv
+results/ALL_metrics_ablation*.csv
+results/ALL_metrics_per_patient*.csv
+results/ALL_metrics_subgroup*.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
