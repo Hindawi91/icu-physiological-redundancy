@@ -1,17 +1,31 @@
-# Physiological Information Redundancy in ICU Vital Signs
+# ICU Physiological Redundancy
 
-> **Systematic Investigation of Cross-Modal Reconstruction and Clinical Utility**
+> **Characterizing Physiological Information Redundancy Among ICU Vital Signs Through Deep Learning-Based Cross-Modal Reconstruction**
 
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-orange.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Data: PhysioNet 2019](https://img.shields.io/badge/Data-PhysioNet%202019-lightblue.svg)](https://physionet.org/content/challenge-2019/1.0.0/)
 
-Official code for the paper:
+> 📄 **Paper coming soon**
 
-> **Physiological Information Redundancy in ICU Vital Signs: A Systematic
-> Investigation of Cross-Modal Reconstruction and Clinical Utility**
-> *Firas Hindawi — IEEE Journal of Biomedical and Health Informatics (under review)*
+---
+
+## Graphical Abstract
+
+<!-- Graphical abstract placeholder — replace with actual image after submission -->
+> *Graphical abstract coming soon.*
+
+<!-- To add your graphical abstract, place the image in the repo and replace the line above with:
+![Graphical Abstract](figures/graphical_abstract.png) -->
+
+---
+
+Official code for:
+
+> **Characterizing Physiological Information Redundancy Among ICU Vital Signs
+> Through Deep Learning-Based Cross-Modal Reconstruction**
+> *Firas Al-Hindawi*
 
 ---
 
@@ -42,40 +56,36 @@ reconstructed signals preserve sepsis classification performance.
 ## Repository Structure
 
 ```
-icu-vital-redundancy/
+icu-physiological-redundancy/
 │
 ├── models.py                        # Reconstruction architectures (TCN, BiLSTM,
 │                                    #   LSTM S2S, U-Net 1D, Transformer, Conv-LSTM)
 ├── classification_models.py         # Sepsis classifier architectures
 ├── train.py                         # Train reconstruction models
 ├── test.py                          # Evaluate reconstruction models
-├── train_sepsis_classifier_v2.py    # Train sepsis classifiers (FS/IS/RAS conditions)
-├── evaluate_clinical_utility.py     # Clinical utility evaluation (Study 1)
-├── evaluate_clinical_utility_v2.py  # Clinical utility evaluation (Study 2)
+├── train_sepsis_classifier.py       # Train sepsis classifier for clinical utility
+├── evaluate_clinical_utility.py     # Clinical utility evaluation
+├── preprocess.py                    # Data preprocessing pipeline
 │
 ├── scripts/                         # SLURM job submission scripts (HPC)
-│   ├── submit_all_experiments.sh    # Submit all 15 reconstruction experiments
-│   ├── submit_classifier_v2.sh      # Submit IS/RAS classifier jobs
-│   └── submit_oracle_search.sh      # Submit oracle architecture search
+│   └── submit_all_experiments.sh    # Submit all 15 reconstruction experiments
 │
 ├── analysis/                        # Results aggregation and plotting
 │   ├── combine_results.py           # Aggregate per-experiment CSVs → ALL_metrics.csv
-│   ├── plot_all_experiments.py      # Waveform figure (Fig. A1–A3 in paper)
-│   └── plot_reconstruction_results.py  # Summary figures (Fig. 2–3 in paper)
+│   ├── plot_all_experiments.py      # Waveform figure (Appendix in paper)
+│   └── plot_reconstruction_results.py  # Summary figures (Figs. 2–3 in paper)
 │
-├── results/                         # Pre-computed results (CSV)
-│   ├── ALL_metrics.csv              # All 15 experiments × 6 models (window-level)
-│   ├── ALL_metrics_per_patient.csv  # Patient-level aggregation
-│   └── ALL_metrics_subgroup.csv     # Sepsis vs non-sepsis subgroup analysis
+├── notebooks/                       # Exploratory data analysis
+│   ├── 1_Prepare_datav3.ipynb       # Data loading, missingness analysis, EDA
+│   └── 2_combine_and_split_datasets.ipynb  # Dataset combination and splitting
+│
+├── results/                         # Pre-computed results
+│   └── ALL_metrics.csv              # All 15 experiments × 6 models
 │
 ├── environment.yml                  # Conda environment
 ├── requirements.txt                 # pip dependencies
 └── README.md
 ```
-
-> **Note:** Model checkpoints (`checkpoints/models/*.pt`) and patient data
-> splits (`checkpoints/splits/`) are **not included** in this repository.
-> See [Data & Checkpoints](#data--checkpoints) below.
 
 ---
 
@@ -103,8 +113,8 @@ full supervision, MAP removed (mean imputed), and MAP reconstructed at
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/icu-vital-redundancy.git
-cd icu-vital-redundancy
+git clone https://github.com/Hindawi91/icu-physiological-redundancy.git
+cd icu-physiological-redundancy
 ```
 
 ### 2. Create the environment
@@ -120,21 +130,26 @@ Or with pip:
 pip install -r requirements.txt
 ```
 
-### 3. Download the data
+### 3. Download and preprocess the data
 
 This study uses the
 [PhysioNet Computing in Cardiology Challenge 2019](https://physionet.org/content/challenge-2019/1.0.0/)
 dataset (free, requires registration).
 
+> **Note:** The preprocessed data splits used in this study cannot be
+> redistributed due to the PhysioNet data use agreement. Run the
+> preprocessing script below with the raw data to reproduce the exact
+> splits (seed = 42).
+
 ```bash
-# After downloading, place files under data/physionet2019/
-# then run preprocessing:
-python preprocess.py --data_dir data/physionet2019/ --out_dir checkpoints/splits/
+# After downloading the PhysioNet 2019 data:
+python preprocess.py \
+    --data_dir /path/to/physionet2019/training/ \
+    --out_dir  checkpoints/splits/
 ```
 
-> **Important:** The preprocessing script applies the same train/val/test
-> splits (stratified by hospital + SepsisLabel) used in the paper. Fix
-> `seed=42` to reproduce exact splits.
+This produces `checkpoints/splits/train.csv`, `val.csv`, and `test.csv`
+with the same patient-stratified splits used in the paper.
 
 ---
 
@@ -143,7 +158,7 @@ python preprocess.py --data_dir data/physionet2019/ --out_dir checkpoints/splits
 ### Train a reconstruction model
 
 ```bash
-# Example: TCN reconstructing MAP from NI + DBP (G2+, r=0.862)
+# Example: TCN reconstructing MAP from NI + DBP (Group 2, r=0.862)
 python train.py \
     --model tcn \
     --inputs HR,O2Sat,Resp,Temp,DBP \
@@ -162,38 +177,24 @@ python test.py \
 
 Results are saved to `results/metrics_<run_tag>.csv`.
 
-### Reproduce all 15 experiments
-
-On a SLURM cluster:
+### Reproduce all 15 experiments (SLURM cluster)
 
 ```bash
 chmod +x scripts/submit_all_experiments.sh
 ./scripts/submit_all_experiments.sh
-```
 
-Then aggregate results:
-
-```bash
-python analysis/combine_results.py --results_dir results/ --out results/ALL_metrics.csv
+# Aggregate results
+python analysis/combine_results.py \
+    --results_dir results/ \
+    --out results/ALL_metrics.csv
 ```
 
 ### Train the sepsis classifier
 
 ```bash
-# Full Supervision (oracle)
-python train_sepsis_classifier_v2.py \
-    --condition FS \
-    --model tcn \
-    --pos_weight 7 \
-    --epochs 100
-
-# Incomplete Supervision (MAP missing)
-python train_sepsis_classifier_v2.py \
-    --condition IS \
-    --missing_vital MAP \
-    --model tcn \
-    --pos_weight 7 \
-    --epochs 100
+python train_sepsis_classifier.py \
+    --pos_weight 5 \
+    --epochs 200
 ```
 
 ### Clinical utility evaluation
@@ -206,55 +207,33 @@ python evaluate_clinical_utility.py --pos_weight 5
 
 ```bash
 # Figure 2: Progressive sensor availability
+# Figure 3: Clinical utility of MAP reconstruction
 python analysis/plot_reconstruction_results.py \
     --metrics results/ALL_metrics.csv \
-    --outdir figures/
+    --outdir  figures/
 
-# Figure A1–A3: Waveform grid (Appendix)
+# Appendix figures: Waveform grid
 python analysis/plot_all_experiments.py --seeds 42
 ```
 
 ---
 
-## Data & Checkpoints
+## Pre-computed Results
 
-### Data splits
+`results/ALL_metrics.csv` contains reconstruction metrics for all
+15 experimental configurations × 6 deep learning models × 5 baselines,
+allowing reproduction of all tables and figures without retraining.
 
-The train/val/test patient splits used in the paper are available as CSV
-files at:
-
-```
-checkpoints/splits/train.csv
-checkpoints/splits/val.csv
-checkpoints/splits/test.csv
-```
-
-These contain Patient_IDs and preprocessed hourly vital sign values.
-Due to PhysioNet data use agreements, we cannot redistribute the raw
-patient data. Download from
-[PhysioNet](https://physionet.org/content/challenge-2019/1.0.0/)
-and run `preprocess.py`.
-
-### Model checkpoints
-
-Pre-trained reconstruction model checkpoints (`.pt` files, ~2 GB total)
-are available at:
-
-> 🔗 **[Zenodo — DOI: 10.5281/zenodo.XXXXXXX]** *(link added after publication)*
-
-Download and place under `checkpoints/models/`.
-
----
-
-## Results
-
-Pre-computed results are included in `results/`:
-
-| File | Contents |
-|------|----------|
-| `ALL_metrics.csv` | 15 experiments × 6 models, window-level RMSE/MAE/MAPE/r |
-| `ALL_metrics_per_patient.csv` | Patient-level aggregation |
-| `ALL_metrics_subgroup.csv` | Sepsis vs non-sepsis subgroup |
+| Column | Description |
+|--------|-------------|
+| `Experiment` | Input→target configuration (e.g. `MAP ← HR,O2Sat,Resp,Temp`) |
+| `Group` | Experimental group (1–4) |
+| `Target` | Reconstructed vital sign |
+| `Inputs` | Input vital signs |
+| `RMSE` | Root mean squared error |
+| `MAE` | Mean absolute error |
+| `MAPE` | Mean absolute percentage error (%) |
+| `Pearson_r` | Pearson correlation coefficient |
 
 ---
 
@@ -270,7 +249,7 @@ Pre-computed results are included in `results/`:
 | Conv-LSTM | Hybrid | CNN 32ch + BiLSTM hidden=64 |
 
 All models receive input `(B, C_in, T)` and output `(B, C_out, T)` where
-`T=12` (12-hour window) and `C_out=1` for single-target reconstruction.
+`T = 12` (12-hour window, 4-hour step) and `C_out = 1`.
 
 ---
 
@@ -280,13 +259,12 @@ If you use this code or results in your research, please cite:
 
 ```bibtex
 @article{hindawi2025icu,
-  title   = {Physiological Information Redundancy in {ICU} Vital Signs:
-             A Systematic Investigation of Cross-Modal Reconstruction
-             and Clinical Utility},
-  author  = {Hindawi, Firas},
-  journal = {IEEE Journal of Biomedical and Health Informatics},
-  year    = {2025},
-  note    = {Under review}
+  title   = {Characterizing Physiological Information Redundancy Among
+             {ICU} Vital Signs Through Deep Learning-Based
+             Cross-Modal Reconstruction},
+  author  = {Al-Hindawi, Firas},
+  year    = {2026},
+  note    = {Manuscript in preparation}
 }
 ```
 
@@ -303,5 +281,9 @@ The PhysioNet 2019 dataset is subject to its own
 
 ## Contact
 
-Firas Hindawi — King Fahd University of Petroleum and Minerals
+Firas Al-Hindawi — King Fahd University of Petroleum and Minerals
 📧 firas.hindawi@kfupm.edu.sa
+🔗 [GitHub](https://github.com/Hindawi91)
+
+
+---
