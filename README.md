@@ -13,11 +13,11 @@
 
 ## Graphical Abstract
 
-<!-- Graphical abstract placeholder — replace with actual image after submission -->
-> *Graphical abstract coming soon.*
-
 <!-- To add your graphical abstract, place the image in the repo and replace the line above with:
 ![Graphical Abstract](figures/graphical_abstract.png) -->
+
+<img width="1918" height="1004" alt="graph_abstract" src="https://github.com/user-attachments/assets/83f52256-f283-490c-bf63-742debb254cf" />
+
 
 ---
 
