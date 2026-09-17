@@ -4,7 +4,7 @@ train_sepsis_classifier.py
 Trains a TCNClassifier to predict sepsis risk from a 12-hour window of
 vital signs + demographics.
 
-Labelling strategy: patient-level (Option C) — all windows from a sepsis
+Labelling strategy: patient-level (Option C) - all windows from a sepsis
 patient are labelled positive. This gives ~13% window-level prevalence
 and a tractable 6.7:1 imbalance ratio.
 
@@ -14,7 +14,7 @@ Architecture:
     → MLP → logit → sigmoid → P(sepsis)
 
 Loss     : BCEWithLogitsLoss with pos_weight
-Stopping : No early stopping — train for full --epochs,
+Stopping : No early stopping - train for full --epochs,
            save best checkpoint based on val balanced accuracy
 
 Usage:
@@ -39,9 +39,9 @@ from sklearn.metrics import (
 
 from models import TCNClassifier
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Config
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 TRAIN_PATH  = "checkpoints/splits/train.csv"
 VAL_PATH    = "checkpoints/splits/val.csv"
 SAVE_DIR    = "classification_results"
@@ -52,9 +52,9 @@ SEED        = 42
 VITAL_COLS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp"]
 DEMO_COLS  = ["Age", "Gender", "ICULOS", "HospAdmTime"]
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Reproducibility
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def set_seed(seed=SEED):
     random.seed(seed)
     np.random.seed(seed)
@@ -63,9 +63,9 @@ def set_seed(seed=SEED):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark     = False
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Data
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def make_windows(df, vital_cols, demo_cols, window_size=WINDOW_SIZE, step=STEP):
     """
     Patient-level labelling (Option C):
@@ -111,9 +111,9 @@ class SepsisDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.D[idx], self.y[idx]
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Comprehensive metrics
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def compute_all_metrics(probs, labels, loss):
     """
     Compute all relevant metrics at optimal F1 threshold.
@@ -183,9 +183,9 @@ def evaluate(model, loader, criterion, device):
 
     return compute_all_metrics(probs, labels, avg_loss), probs, labels
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def main(args):
     set_seed(SEED)
     os.makedirs(SAVE_DIR, exist_ok=True)
@@ -199,7 +199,7 @@ def main(args):
 
     demo_cols = [] if args.no_demographics else DEMO_COLS
 
-    # ── Load data ─────────────────────────────────────────────────────────
+    # -- Load data ---------------------------------------------------------
     df_train = pd.read_csv(TRAIN_PATH)
     df_val   = pd.read_csv(VAL_PATH)
 
@@ -219,7 +219,7 @@ def main(args):
     val_loader   = DataLoader(val_ds, batch_size=args.batch_size,
                               shuffle=False)
 
-    # ── Build model ───────────────────────────────────────────────────────
+    # -- Build model -------------------------------------------------------
     model = TCNClassifier(
         n_vitals   = len(VITAL_COLS),
         n_demo     = len(demo_cols),
@@ -247,15 +247,15 @@ def main(args):
     history      = []
 
     # Header
-    print(f"\n{'─'*105}")
+    print(f"\n{'-'*105}")
     print(f"{'Ep':>4}  {'TrLoss':>8}  {'VaLoss':>8}  "
           f"{'AUROC':>7}  {'AUPRC':>7}  {'BalAcc':>7}  "
           f"{'Acc':>7}  {'F1':>7}  {'Sens':>7}  {'Spec':>7}  {'Prec':>7}")
-    print(f"{'─'*105}")
+    print(f"{'-'*105}")
 
     for epoch in range(1, args.epochs + 1):
 
-        # ── Train ──────────────────────────────────────────────────────────
+        # -- Train ----------------------------------------------------------
         model.train()
         train_loss = 0.0
         for x, d, y in train_loader:
@@ -269,7 +269,7 @@ def main(args):
             train_loss += loss.item()
         train_loss /= max(len(train_loader), 1)
 
-        # ── Validate ───────────────────────────────────────────────────────
+        # -- Validate -------------------------------------------------------
         val_m, _, _ = evaluate(model, val_loader, criterion, device)
         scheduler.step(val_m["bal_accuracy"])
 
@@ -297,7 +297,7 @@ def main(args):
                 "demo_cols":            demo_cols,
                 "seed":                 SEED,
             }, ckpt_path)
-            print(f"      ✅ Best saved  "
+            print(f"      Best saved  "
                   f"(BalAcc={best_bal_acc:.4f}  "
                   f"AUROC={val_m['auroc']:.4f}  "
                   f"AUPRC={val_m['auprc']:.4f})")
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr",              type=float, default=1e-3)
     parser.add_argument("--pos_weight",      type=float, default=7.0)
     parser.add_argument("--no_early_stopping", action="store_true",
-                        help="Kept for compatibility — early stopping is "
+                        help="Kept for compatibility - early stopping is "
                              "disabled by default in this version")
     parser.add_argument("--no_demographics", action="store_true")
     args = parser.parse_args()

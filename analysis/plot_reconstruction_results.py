@@ -5,7 +5,7 @@ Generates a publication-quality summary figure for all 15 reconstruction
 experiments. Two figures are produced:
 
 Figure 1 (fig_reconstruction_overview.pdf):
-    Grid of bar charts — one per experiment group.
+    Grid of bar charts - one per experiment group.
     X-axis: architectures. Y-axis: Pearson r.
     Clearly labelled titles, axes, and experiment descriptions.
 
@@ -29,9 +29,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Style
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 FONT_SIZE   = 18
 TITLE_SIZE  = 18
 LABEL_SIZE  = 14
@@ -87,49 +87,49 @@ MODEL_COLORS = {
 EXPERIMENTS = [
     # (label, group_title, experiment_str)
     ("G1: MAP\n← NI only",
-     "Group 1 — Fully Non-Invasive → Blood Pressure",
+     "Group 1 - Fully Non-Invasive → Blood Pressure",
      "MAP ← HR,O2Sat,Resp,Temp"),
     ("G1: SBP\n← NI only",
-     "Group 1 — Fully Non-Invasive → Blood Pressure",
+     "Group 1 - Fully Non-Invasive → Blood Pressure",
      "SBP ← HR,O2Sat,Resp,Temp"),
     ("G1: DBP\n← NI only",
-     "Group 1 — Fully Non-Invasive → Blood Pressure",
+     "Group 1 - Fully Non-Invasive → Blood Pressure",
      "DBP ← HR,O2Sat,Resp,Temp"),
     ("G2: MAP\n← NI+DBP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "MAP ← HR,O2Sat,Resp,Temp,DBP"),
     ("G2: MAP\n← NI+SBP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "MAP ← HR,O2Sat,Resp,Temp,SBP"),
     ("G2: MAP\n← NI+DBP+SBP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "MAP ← HR,O2Sat,Resp,Temp,DBP,SBP"),
     ("G2: SBP\n← NI+DBP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "SBP ← HR,O2Sat,Resp,Temp,DBP"),
     ("G2: SBP\n← NI+MAP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "SBP ← HR,O2Sat,Resp,Temp,MAP"),
     ("G2: SBP\n← NI+DBP+MAP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "SBP ← HR,O2Sat,Resp,Temp,DBP,MAP"),
     ("G2: DBP\n← NI+SBP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "DBP ← HR,O2Sat,Resp,Temp,SBP"),
     ("G2: DBP\n← NI+MAP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "DBP ← HR,O2Sat,Resp,Temp,MAP"),
     ("G2: DBP\n← NI+SBP+MAP",
-     "Group 2 — Partial BP Sensor → Missing BP",
+     "Group 2 - Partial BP Sensor → Missing BP",
      "DBP ← HR,O2Sat,Resp,Temp,SBP,MAP"),
     ("G3: Temp\n← 6 vitals",
-     "Group 3 — Temperature",
+     "Group 3 - Temperature",
      "Temp ← HR,O2Sat,Resp,MAP,SBP,DBP"),
     ("G4: Resp\n← 6 vitals",
-     "Group 4 — Resp & O₂Sat",
+     "Group 4 - Resp & O₂Sat",
      "Resp ← HR,O2Sat,Temp,MAP,SBP,DBP"),
     ("G4: O₂Sat\n← 6 vitals",
-     "Group 4 — Resp & O₂Sat",
+     "Group 4 - Resp & O₂Sat",
      "O2Sat ← HR,Resp,Temp,MAP,SBP,DBP"),
 ]
 
@@ -141,9 +141,9 @@ def load_data(metrics_path):
     return df
 
 
-# ════════════════════════════════════════════════════════════════════════
-# Figure 2 — Progressive sensor availability (all 3 targets on one plot)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
+# Figure 2 - Progressive sensor availability (all 3 targets on one plot)
+# ========================================================================
 def plot_progressive(df, outdir):
     """
     One line per target (MAP/SBP/DBP) connecting three points:
@@ -152,7 +152,7 @@ def plot_progressive(df, outdir):
       x=2: dual-sensor config
 
     All other single-sensor configs plotted as hollow markers at x=1
-    but NOT connected — the main line uses only the best single config.
+    but NOT connected - the main line uses only the best single config.
 
     r= labels stacked vertically below the lowest point at each x,
     aligned in a column for readability.
@@ -189,7 +189,7 @@ def plot_progressive(df, outdir):
     apply_style()
     fig, ax = plt.subplots(figsize=(13, 8))
 
-    # ── Draw main lines and markers ───────────────────────────────────
+    # -- Draw main lines and markers -----------------------------------
     for target in targets:
         r0  = ni_only[target]
         r1b = best_single[target][1]
@@ -212,10 +212,10 @@ def plot_progressive(df, outdir):
                    marker=markers[target], s=MSIZE, zorder=4,
                    edgecolors=colors[target], linewidths=2.0)
 
-        # Target label at right end — stored for later vertical spacing
+        # Target label at right end - stored for later vertical spacing
         pass  # labels drawn after loop
 
-    # ── Target labels at right end with vertical spacing ─────────────
+    # -- Target labels at right end with vertical spacing -------------
     right_labels = sorted([(dual[t][1], t) for t in targets], key=lambda x: x[0])
     used_ys, min_gap = [], 0.04
     for r2, target in right_labels:
@@ -265,10 +265,10 @@ def plot_progressive(df, outdir):
                     fontsize=LABEL_SIZE, fontweight="bold",
                     color=colors[target])
 
-    # ── Threshold and shading ─────────────────────────────────────────
-    # Background shading removed — no threshold line
+    # -- Threshold and shading -----------------------------------------
+    # Background shading removed - no threshold line
 
-    # ── Axes ──────────────────────────────────────────────────────────
+    # -- Axes ----------------------------------------------------------
     ax.set_xticks([0, 1, 2])
     ax.set_xticklabels(
         ["No BP sensor\n(NI vitals only)",
@@ -286,7 +286,7 @@ def plot_progressive(df, outdir):
         "(NI = HR, O\u2082Sat, Resp, Temp)",
         fontsize=TITLE_SIZE, fontweight="bold")
 
-    # ── Legend (lower right) ──────────────────────────────────────────
+    # -- Legend (lower right) ------------------------------------------
     from matplotlib.lines import Line2D
     import matplotlib.patches as mpatches
     handles = [
@@ -308,13 +308,13 @@ def plot_progressive(df, outdir):
     out_path = os.path.join(outdir, "fig_progressive_sensor.pdf")
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.savefig(out_path.replace(".pdf", ".png"), dpi=200, bbox_inches="tight")
-    print(f"✅ Saved: {out_path}")
+    print(f"Saved: {out_path}")
     plt.close()
 
 
-# ════════════════════════════════════════════════════════════════════════
-# Figure 3 — Clinical utility MAP (vertical layout, progressive shading)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
+# Figure 3 - Clinical utility MAP (vertical layout, progressive shading)
+# ========================================================================
 def plot_clinical_utility(outdir):
 
     conditions = [
@@ -329,11 +329,11 @@ def plot_clinical_utility(outdir):
 
     # Colors: full=blue, removed=red, recons=progressively darker greens
     colors = [
-        "#1565C0",   # Full — blue
-        "#C62828",   # Removed — red
-        "#A5D6A7",   # G1 — light green
-        "#43A047",   # G2+ — medium green
-        "#1B5E20",   # G2++ — dark green
+        "#1565C0",   # Full - blue
+        "#C62828",   # Removed - red
+        "#A5D6A7",   # G1 - light green
+        "#43A047",   # G2+ - medium green
+        "#1B5E20",   # G2++ - dark green
     ]
 
     apply_style()
@@ -345,7 +345,7 @@ def plot_clinical_utility(outdir):
         fontsize=14, fontweight="bold"
     )
 
-    # ── Top panel: AUROC ─────────────────────────────────────────────
+    # -- Top panel: AUROC ---------------------------------------------
     x     = np.arange(len(conditions))
     bars  = ax1.bar(x, aurocs, color=colors, edgecolor="white",
                     linewidth=0.8, width=0.6)
@@ -378,7 +378,7 @@ def plot_clinical_utility(outdir):
                      arrowprops=dict(arrowstyle="-", color=colors[i+2],
                                      lw=1.2, linestyle="dashed"))
 
-    # ── Bottom panel: Recovery % ──────────────────────────────────────
+    # -- Bottom panel: Recovery % --------------------------------------
     rec_conditions = [
         "G1 recon\n(r=0.225)\nNI only",
         "G2+ recon\n(r=0.862)\nNI+DBP",
@@ -413,13 +413,13 @@ def plot_clinical_utility(outdir):
     out_path = os.path.join(outdir, "fig_clinical_utility_map.pdf")
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.savefig(out_path.replace(".pdf", ".png"), dpi=200, bbox_inches="tight")
-    print(f"✅ Saved: {out_path}")
+    print(f"Saved: {out_path}")
     plt.close()
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--metrics", type=str,

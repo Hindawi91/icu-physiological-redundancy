@@ -34,9 +34,9 @@ from sklearn.metrics import (roc_auc_score, average_precision_score,
 
 from models import TCNClassifier, TCN, build_model
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Config
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 TEST_PATH      = "checkpoints/splits/test.csv"
 TRAIN_PATH     = "checkpoints/splits/train.csv"
 RECON_DIR      = "checkpoints/models"
@@ -53,10 +53,10 @@ DEMO_COLS  = ["Age", "Gender", "ICULOS", "HospAdmTime"]
 # Format: (label, vital_to_replace, reconstruction_run_tag or None)
 # vital_to_replace=None means use true signal for all vitals
 CONDITIONS = [
-    # ── Full baseline ──────────────────────────────────────────────────
+    # -- Full baseline --------------------------------------------------
     ("Full (all true vitals)", None, None),
 
-    # ── Drop one vital (mean imputation) ──────────────────────────────
+    # -- Drop one vital (mean imputation) ------------------------------
     ("Remove HR",    "HR",    None),
     ("Remove O2Sat", "O2Sat", None),
     ("Remove Temp",  "Temp",  None),
@@ -65,35 +65,35 @@ CONDITIONS = [
     ("Remove DBP",   "DBP",   None),
     ("Remove Resp",  "Resp",  None),
 
-    # ── Reconstruct MAP ───────────────────────────────────────────────
+    # -- Reconstruct MAP -----------------------------------------------
     ("MAP recon G1 (NI only, r=0.225)",   "MAP", "HR-O2Sat-Resp-Temp_to_MAP"),
     ("MAP recon G2+ (+DBP, r=0.863)",     "MAP", "HR-O2Sat-Resp-Temp-DBP_to_MAP"),
     ("MAP recon G2++ (+DBP+SBP, r=0.936)","MAP", "HR-O2Sat-Resp-Temp-DBP-SBP_to_MAP"),
 
-    # ── Reconstruct SBP ───────────────────────────────────────────────
+    # -- Reconstruct SBP -----------------------------------------------
     ("SBP recon G1 (NI only, r=0.231)",   "SBP", "HR-O2Sat-Resp-Temp_to_SBP"),
     ("SBP recon G2+ (+DBP, r=0.603)",     "SBP", "HR-O2Sat-Resp-Temp-DBP_to_SBP"),
     ("SBP recon G2++ (+DBP+MAP, r=0.886)","SBP", "HR-O2Sat-Resp-Temp-DBP-MAP_to_SBP"),
 
-    # ── Reconstruct DBP ───────────────────────────────────────────────
+    # -- Reconstruct DBP -----------------------------------------------
     ("DBP recon G1 (NI only, r=0.273)",   "DBP", "HR-O2Sat-Resp-Temp_to_DBP"),
     ("DBP recon G2+ (+SBP, r=0.599)",     "DBP", "HR-O2Sat-Resp-Temp-SBP_to_DBP"),
     ("DBP recon G2++ (+SBP+MAP, r=0.915)","DBP", "HR-O2Sat-Resp-Temp-SBP-MAP_to_DBP"),
 
-    # ── Reconstruct Temp ──────────────────────────────────────────────
+    # -- Reconstruct Temp ----------------------------------------------
     ("Temp recon (r=0.383)",   "Temp",  "HR-O2Sat-Resp-MAP-SBP-DBP_to_Temp"),
 
-    # ── Reconstruct Resp ──────────────────────────────────────────────
+    # -- Reconstruct Resp ----------------------------------------------
     ("Resp recon (r=0.301)",   "Resp",  "HR-O2Sat-Temp-MAP-SBP-DBP_to_Resp"),
 
-    # ── Reconstruct O2Sat ─────────────────────────────────────────────
+    # -- Reconstruct O2Sat ---------------------------------------------
     ("O2Sat recon (r=0.207)",  "O2Sat", "HR-Resp-Temp-MAP-SBP-DBP_to_O2Sat"),
 ]
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Reproducibility
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def set_seed(seed=SEED):
     random.seed(seed)
     np.random.seed(seed)
@@ -103,9 +103,9 @@ def set_seed(seed=SEED):
     torch.backends.cudnn.benchmark     = False
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Data
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def make_windows(df, vital_cols, demo_cols, window_size=WINDOW_SIZE, step=STEP):
     X_list, D_list, y_list = [], [], []
     sepsis_pids = set(df[df["SepsisLabel"] == 1]["Patient_ID"].unique())
@@ -129,9 +129,9 @@ def make_windows(df, vital_cols, demo_cols, window_size=WINDOW_SIZE, step=STEP):
     return X, D, y
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Reconstruction inference
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def load_recon_model(run_tag, in_ch, device):
     """Load best TCN reconstruction checkpoint for a given run_tag.
     in_ch is derived from run_tag (inputs before '_to_') to match
@@ -139,7 +139,7 @@ def load_recon_model(run_tag, in_ch, device):
     """
     path = os.path.join(RECON_DIR, f"tcn_{run_tag}_best.pt")
     if not os.path.exists(path):
-        print(f"   ⚠️  Reconstruction checkpoint not found: {path}")
+        print(f"   Reconstruction checkpoint not found: {path}")
         return None
     # Parse in_ch from run_tag: "HR-O2Sat-Resp-Temp_to_MAP" -> 4 inputs
     input_part = run_tag.split("_to_")[0]
@@ -155,7 +155,7 @@ def reconstruct_vital(X_test, vital_idx, run_tag, vital_cols, device,
                       batch_size=512):
     """
     Replace one channel in X_test with reconstructed values.
-    X_test   : (N, n_vitals, T)  — true test windows (all 7 vitals)
+    X_test   : (N, n_vitals, T)  - true test windows (all 7 vitals)
     run_tag  : encodes exact input columns, e.g. HR-O2Sat-Resp-Temp_to_MAP
     Returns a copy of X_test with vital_idx channel replaced.
     """
@@ -186,9 +186,9 @@ def reconstruct_vital(X_test, vital_idx, run_tag, vital_cols, device,
     return X_replaced
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Classifier evaluation
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def compute_metrics(probs, labels):
     """
     Compute all relevant metrics at the optimal F1 threshold.
@@ -249,9 +249,9 @@ def run_classifier(model, X, D, device, batch_size=512):
     return np.concatenate(probs)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def main():
     set_seed(SEED)
     os.makedirs(SAVE_DIR, exist_ok=True)
@@ -259,11 +259,11 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Device: {device}")
 
-    # ── Load classifier ───────────────────────────────────────────────────
+    # -- Load classifier ---------------------------------------------------
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--pos_weight", type=float, default=7.0,
-                        help="pos_weight used during training — selects checkpoint")
+                        help="pos_weight used during training - selects checkpoint")
     cli = parser.parse_args()
     pw_tag    = str(cli.pos_weight).replace(".", "p")
     ckpt_path = os.path.join(CLASSIFIER_DIR, f"tcn_classifier_pw{pw_tag}_best.pt")
@@ -279,7 +279,7 @@ def main():
         f"Vital cols mismatch: {vital_cols_saved} vs {VITAL_COLS}"
 
     best_metric = ckpt.get("best_bal_accuracy", ckpt.get("best_auroc", float("nan")))
-    print(f"Classifier loaded — best val balanced accuracy: {best_metric:.4f}")
+    print(f"Classifier loaded - best val balanced accuracy: {best_metric:.4f}")
     print(f"Demographics: {demo_cols if demo_cols else 'None'}")
 
     classifier = TCNClassifier(
@@ -290,11 +290,11 @@ def main():
     ).to(device)
     classifier.load_state_dict(ckpt["model_state_dict"])
     classifier.eval()
-    # Freeze classifier — weights never change across conditions
+    # Freeze classifier - weights never change across conditions
     for p in classifier.parameters():
         p.requires_grad = False
 
-    # ── Load test data ────────────────────────────────────────────────────
+    # -- Load test data ----------------------------------------------------
     print("\nLoading test data...")
     df_test = pd.read_csv(TEST_PATH)
 
@@ -306,7 +306,7 @@ def main():
     df_train = pd.read_csv(TRAIN_PATH)
     vital_means = df_train[VITAL_COLS].mean().values.astype(np.float32)
 
-    # ── Run all conditions ─────────────────────────────────────────────────
+    # -- Run all conditions -------------------------------------------------
     print(f"\nRunning {len(CONDITIONS)} conditions...\n")
     results = []
 
@@ -317,11 +317,11 @@ def main():
         print(f"  {label}")
 
         if vital_to_replace is None:
-            # Full baseline — use true signals
+            # Full baseline - use true signals
             X_eval = X_true.copy()
 
         elif recon_run_tag is None:
-            # Drop condition — replace with training mean
+            # Drop condition - replace with training mean
             vital_idx = VITAL_COLS.index(vital_to_replace)
             X_eval    = X_true.copy()
             X_eval[:, vital_idx, :] = vital_means[vital_idx]
@@ -332,7 +332,7 @@ def main():
             X_eval    = reconstruct_vital(
                 X_true, vital_idx, recon_run_tag, VITAL_COLS, device)
             if X_eval is None:
-                print(f"    ⚠️  Skipping — reconstruction model not available")
+                print(f"    Skipping - reconstruction model not available")
                 continue
 
         # Run frozen classifier
@@ -352,7 +352,7 @@ def main():
               f"Spec={metrics['Specificity']:.4f}  Prec={metrics['Precision']:.4f}  "
               f"NPV={metrics['NPV']:.4f}")
 
-    # ── Compute % AUROC recovered ─────────────────────────────────────────
+    # -- Compute % AUROC recovered -----------------------------------------
     bl_auroc = baseline_metrics["AUROC"]
 
     # For each reconstruction condition, find the corresponding drop condition
@@ -379,16 +379,16 @@ def main():
             r["AUROC_recovered"] = float("nan")
             r["Pct_recovered"]   = float("nan")
 
-    # ── Save results ──────────────────────────────────────────────────────
+    # -- Save results ------------------------------------------------------
     df_results = pd.DataFrame(results)
     csv_path   = os.path.join(SAVE_DIR, "clinical_utility_results.csv")
     df_results.to_csv(csv_path, index=False)
-    print(f"\n✅ Saved: {csv_path}")
+    print(f"\nSaved: {csv_path}")
 
-    # ── Print summary table ───────────────────────────────────────────────
+    # -- Print summary table -----------------------------------------------
     summary_lines = []
     summary_lines.append("\n" + "="*95)
-    summary_lines.append("  Clinical Utility — Information Redundancy Map")
+    summary_lines.append("  Clinical Utility - Information Redundancy Map")
     summary_lines.append(f"  Baseline AUROC (all true vitals): {bl_auroc:.4f}")
     summary_lines.append("="*95)
     summary_lines.append(
@@ -413,7 +413,7 @@ def main():
     txt_path = os.path.join(SAVE_DIR, "clinical_utility_summary.txt")
     with open(txt_path, "w") as f:
         f.write(summary)
-    print(f"\n✅ Summary saved: {txt_path}")
+    print(f"\nSummary saved: {txt_path}")
 
 
 if __name__ == "__main__":

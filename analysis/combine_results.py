@@ -2,10 +2,10 @@
 combine_results.py
 
 Aggregates all 15 experiment results into:
-    1. results/ALL_metrics.csv          — window-level metrics, all experiments
-    2. results/ALL_metrics_per_patient.csv — per-patient metrics, all experiments
-    3. results/ALL_metrics_subgroup.csv — sepsis vs healthy, all experiments
-    4. paper_figures/ALL_experiments.png — 15 rows × 6 cols comprehensive figure
+    1. results/ALL_metrics.csv          - window-level metrics, all experiments
+    2. results/ALL_metrics_per_patient.csv - per-patient metrics, all experiments
+    3. results/ALL_metrics_subgroup.csv - sepsis vs healthy, all experiments
+    4. paper_figures/ALL_experiments.png - 15 rows × 6 cols comprehensive figure
 
 Run after all test.py calls have completed.
 
@@ -26,9 +26,9 @@ from torch.utils.data import DataLoader
 
 from models import build_model, MODEL_REGISTRY
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Config
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 RESULTS_DIR    = "results"
 FIGURES_DIR    = "paper_figures"
@@ -99,12 +99,12 @@ GROUP_LABELS = {
 }
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Step 1: Combine per-experiment CSVs into ALL_* files
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 def combine_csvs():
-    print("\n── Combining CSVs ──────────────────────────────────────")
+    print("\n-- Combining CSVs --------------------------------------")
 
     all_window, all_patient, all_subgroup = [], [], []
 
@@ -126,9 +126,9 @@ def combine_csvs():
             df.insert(0, "Group", exp["group"])
             df.insert(0, "Experiment", label)
             all_window.append(df)
-            print(f"   ✅ {run_tag}")
+            print(f"   {run_tag}")
         else:
-            print(f"   ⚠️  Missing: metrics_{run_tag}.csv")
+            print(f"   Missing: metrics_{run_tag}.csv")
 
         # Per-patient
         path = os.path.join(RESULTS_DIR, f"metrics_per_patient_{run_tag}.csv")
@@ -154,26 +154,26 @@ def combine_csvs():
     if all_window:
         out = pd.concat(all_window)
         out.to_csv(os.path.join(RESULTS_DIR, "ALL_metrics.csv"))
-        print(f"\n   ✅ Saved: results/ALL_metrics.csv "
+        print(f"\n   Saved: results/ALL_metrics.csv "
               f"({len(out)} rows)")
 
     if all_patient:
         out = pd.concat(all_patient)
         out.to_csv(os.path.join(RESULTS_DIR, "ALL_metrics_per_patient.csv"))
-        print(f"   ✅ Saved: results/ALL_metrics_per_patient.csv "
+        print(f"   Saved: results/ALL_metrics_per_patient.csv "
               f"({len(out)} rows)")
 
     if all_subgroup:
         out = pd.concat(all_subgroup)
         out.to_csv(os.path.join(RESULTS_DIR, "ALL_metrics_subgroup.csv"),
                    index=False)
-        print(f"   ✅ Saved: results/ALL_metrics_subgroup.csv "
+        print(f"   Saved: results/ALL_metrics_subgroup.csv "
               f"({len(out)} rows)")
 
 
-# ════════════════════════════════════════════════════════════════════════
-# Step 2: Comprehensive figure — 15 rows × 6 cols
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
+# Step 2: Comprehensive figure - 15 rows × 6 cols
+# ========================================================================
 
 def make_windows(df, input_cols, target_cols):
     X_list, y_list, meta = [], [], []
@@ -233,7 +233,7 @@ class NumpyLinReg:
 
 
 def plot_comprehensive_figure(device):
-    print("\n── Generating comprehensive figure (15 × 6) ────────────")
+    print("\n-- Generating comprehensive figure (15 × 6) ------------")
 
     df_test  = pd.read_csv(TEST_PATH)
     df_train = pd.read_csv(TRAIN_PATH)
@@ -297,7 +297,7 @@ def plot_comprehensive_figure(device):
         # Group separator line
         if exp["group"] != current_group:
             current_group = exp["group"]
-            # Group change noted — spacing handled by gridspec hspace
+            # Group change noted - spacing handled by gridspec hspace
 
         for col, (win_idx, is_sepsis) in enumerate(
                 zip(indices, [False]*3 + [True]*3)):
@@ -374,12 +374,12 @@ def plot_comprehensive_figure(device):
     save_path = os.path.join(FIGURES_DIR, "ALL_experiments.png")
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"\n   ✅ Saved: {save_path}")
+    print(f"\n   Saved: {save_path}")
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 if __name__ == "__main__":
     random.seed(SEED)
@@ -396,7 +396,7 @@ if __name__ == "__main__":
     # Step 2: Comprehensive figure
     plot_comprehensive_figure(device)
 
-    print("\n✅ All combined outputs generated:")
+    print("\nAll combined outputs generated:")
     print("   results/ALL_metrics.csv")
     print("   results/ALL_metrics_per_patient.csv")
     print("   results/ALL_metrics_subgroup.csv")

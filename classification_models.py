@@ -5,16 +5,16 @@ Purpose-built classifiers for sepsis risk prediction from ICU vital sign windows
 
 All models share the same interface:
     forward(x, demo=None) -> logits (B,)
-    x    : (B, n_vitals, T)  — vital sign window
-    demo : (B, n_demo)       — static demographics (optional)
+    x    : (B, n_vitals, T)  - vital sign window
+    demo : (B, n_demo)       - static demographics (optional)
 
 Models implemented:
-    1. TCNClassifier      — dilated TCN + last timestep + MLP head
-    2. LSTMClassifier     — bidirectional LSTM + last timestep + MLP head
-    3. TransformerClassifier — Transformer encoder + CLS token + MLP head
-    4. ResNetClassifier   — 1D ResNet + global average pool + MLP head
-    5. InceptionClassifier — 1D Inception + global average pool + MLP head
-    6. ROCKETClassifier   — ROCKET random convolutions + logistic regression head
+    1. TCNClassifier      - dilated TCN + last timestep + MLP head
+    2. LSTMClassifier     - bidirectional LSTM + last timestep + MLP head
+    3. TransformerClassifier - Transformer encoder + CLS token + MLP head
+    4. ResNetClassifier   - 1D ResNet + global average pool + MLP head
+    5. InceptionClassifier - 1D Inception + global average pool + MLP head
+    6. ROCKETClassifier   - ROCKET random convolutions + logistic regression head
 """
 
 import math
@@ -24,9 +24,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Shared MLP head (used by all models)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class MLPHead(nn.Module):
     """
@@ -50,9 +50,9 @@ class MLPHead(nn.Module):
         return self.net(x).squeeze(-1)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 1. TCN Classifier
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class TCNBlock(nn.Module):
     def __init__(self, in_ch, out_ch, kernel_size, dilation, dropout=0.2):
@@ -99,9 +99,9 @@ class TCNClassifier(nn.Module):
         return self.head(feat)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 2. LSTM Classifier
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class LSTMClassifier(nn.Module):
     def __init__(self, n_vitals=7, n_demo=0, hidden_size=128,
@@ -129,9 +129,9 @@ class LSTMClassifier(nn.Module):
         return self.head(feat)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 3. Transformer Classifier
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len=500, dropout=0.1):
@@ -176,9 +176,9 @@ class TransformerClassifier(nn.Module):
         return self.head(feat)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 4. ResNet Classifier (1D)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class ResBlock1D(nn.Module):
     def __init__(self, in_ch, out_ch, stride=1, dropout=0.2):
@@ -231,9 +231,9 @@ class ResNetClassifier(nn.Module):
         return self.head(feat)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 5. Inception Classifier (1D)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class InceptionBlock1D(nn.Module):
     """Multi-scale convolutions at kernel sizes 1, 3, 5, 7 + MaxPool branch."""
@@ -285,11 +285,11 @@ class InceptionClassifier(nn.Module):
         return self.head(feat)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 6. ROCKET Classifier
-#    Random Convolutional Kernel Transform — Dempster et al. 2020
+#    Random Convolutional Kernel Transform - Dempster et al. 2020
 #    Uses random kernels to extract features, then a linear classifier
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class ROCKETClassifier(nn.Module):
     """
@@ -300,7 +300,7 @@ class ROCKETClassifier(nn.Module):
     These 2*n_kernels features are fed to a linear classifier.
 
     Unlike other models, ROCKET requires a two-step training process:
-    Step 1: transform() — extract features (no gradients needed)
+    Step 1: transform() - extract features (no gradients needed)
     Step 2: train linear head on features
 
     For end-to-end compatibility, the random kernels are fixed (no grad)
@@ -313,7 +313,7 @@ class ROCKETClassifier(nn.Module):
         self.n_kernels     = n_kernels
         self.n_demo        = n_demo
 
-        # Generate random kernels (fixed — not trained)
+        # Generate random kernels (fixed - not trained)
         torch.manual_seed(42)
         kernel_lengths = torch.randint(7, max_kernel_length + 1,
                                         (n_kernels,))
@@ -355,9 +355,9 @@ class ROCKETClassifier(nn.Module):
         return self.head(feat).squeeze(-1)      # (B,)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Registry
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 CLF_REGISTRY = {
     "tcn":         TCNClassifier,
@@ -378,9 +378,9 @@ def build_classifier(name, n_vitals, n_demo=0, **kwargs):
     return CLF_REGISTRY[key](n_vitals=n_vitals, n_demo=n_demo, **kwargs)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Quick sanity check
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 if __name__ == "__main__":
     B, C, T   = 8, 7, 12   # batch, vitals, timesteps

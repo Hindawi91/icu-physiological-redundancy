@@ -22,9 +22,9 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from models import build_model, MODEL_REGISTRY
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Reproducibility
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 DEFAULT_SEED = 42
 
 def set_seed(seed: int = DEFAULT_SEED):
@@ -35,17 +35,17 @@ def set_seed(seed: int = DEFAULT_SEED):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Config
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 TRAIN_PATH  = "checkpoints/splits/train.csv"
 VAL_PATH    = "checkpoints/splits/val.csv"
 WINDOW_SIZE = 12
 STEP        = 4
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Physics-aware loss: MSE + lambda_r * (1 - Pearson_r)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def pearson_r_loss(pred, target):
     """
     Computes 1 - Pearson_r averaged over all output channels and batch.
@@ -65,9 +65,9 @@ def pearson_r_loss(pred, target):
     r     = num / denom
     return (1 - r).mean()
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Data: sliding windows + Dataset
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def make_windows(df, input_cols, target_cols, demo_cols=None,
                  window_size=WINDOW_SIZE, step=STEP):
     """
@@ -120,9 +120,9 @@ class VitalsDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Train / validate loop
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def run_epoch(model, loader, criterion, optimizer, device,
               train: bool, lambda_r: float = 0.0):
     model.train(mode=train)
@@ -157,9 +157,9 @@ def run_epoch(model, loader, criterion, optimizer, device,
     avg_rmse = avg_loss ** 0.5
     return avg_loss, avg_mae, avg_rmse
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def main(args):
     set_seed(args.seed)
     print(f"Seed       : {args.seed}")
@@ -183,7 +183,7 @@ def main(args):
     total_in_channels = len(input_cols) + len(demo_cols)
     print(f"Total input channels: {total_in_channels}")
 
-    # ── Load data ────────────────────────────────────────────────────────
+    # -- Load data --------------------------------------------------------
     df_train = pd.read_csv(TRAIN_PATH)
     df_val   = pd.read_csv(VAL_PATH)
 
@@ -202,7 +202,7 @@ def main(args):
     train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True,  drop_last=True)
     val_loader   = DataLoader(val_ds,   batch_size=args.batch_size, shuffle=False)
 
-    # ── Build model ──────────────────────────────────────────────────────
+    # -- Build model ------------------------------------------------------
     model = build_model(args.model,
                         in_channels=total_in_channels,
                         out_channels=len(target_cols)).to(device)
@@ -214,7 +214,7 @@ def main(args):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="min", factor=0.5, patience=5)
 
-    # ── Checkpoint naming ─────────────────────────────────────────────────
+    # -- Checkpoint naming -------------------------------------------------
     os.makedirs(args.checkpoint_dir, exist_ok=True)
     target_tag = "-".join(target_cols)
     input_tag  = "-".join(input_cols)
@@ -236,7 +236,7 @@ def main(args):
 
     print(f"Run tag: {run_tag}")
 
-    # ── Resume ───────────────────────────────────────────────────────────
+    # -- Resume -----------------------------------------------------------
     start_epoch       = 1
     best_val_loss     = float("inf")
     epochs_no_improve = 0
@@ -244,7 +244,7 @@ def main(args):
 
     resume_from = args.resume if args.resume else (ckpt_path if args.auto_resume else None)
     if resume_from and os.path.exists(resume_from):
-        print(f"\n🔄 Resuming from: {resume_from}")
+        print(f"\nResuming from: {resume_from}")
         ckpt = torch.load(resume_from, map_location=device)
         model.load_state_dict(ckpt["model_state_dict"])
         optimizer.load_state_dict(ckpt["optimizer_state_dict"])
@@ -257,7 +257,7 @@ def main(args):
                 history = json.load(f)
         print(f"   Resuming at epoch {start_epoch} (best: {best_val_loss:.4f})\n")
 
-    # ── Training loop ────────────────────────────────────────────────────
+    # -- Training loop ----------------------------------------------------
     for epoch in range(start_epoch, args.epochs + 1):
         train_loss, train_mae, train_rmse = run_epoch(
             model, train_loader, criterion, optimizer, device,
@@ -294,7 +294,7 @@ def main(args):
                 "epochs_no_improve":  epochs_no_improve,
                 "args":               vars(args),
             }, ckpt_path)
-            print(f"   ✅ New best saved (val_loss={val_loss:.4f})")
+            print(f"   New best saved (val_loss={val_loss:.4f})")
         else:
             epochs_no_improve += 1
 

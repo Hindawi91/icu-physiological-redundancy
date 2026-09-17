@@ -42,7 +42,7 @@ mkdir -p ${PROJECT}/checkpoints/models
 
 MODELS="unet1d bilstm lstm_seq2seq tcn transformer conv_lstm"
 
-# ── Experiment definitions: "TARGET|INPUTS" ──────────────────────────────────
+# -- Experiment definitions: "TARGET|INPUTS" ----------------------------------
 declare -a EXPERIMENTS=(
     # Group 1: Fully non-invasive → BP
     "MAP|HR,O2Sat,Resp,Temp"
@@ -83,7 +83,7 @@ for experiment in "${EXPERIMENTS[@]}"; do
     RUN_TAG="${INPUT_TAG}_to_${TARGET_TAG}"
 
     echo ""
-    echo "── Target: ${TARGET} | Inputs: ${INPUTS} ──────────────────────────"
+    echo "-- Target: ${TARGET} | Inputs: ${INPUTS} --------------------------"
 
     for model in $MODELS; do
 

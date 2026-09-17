@@ -14,9 +14,9 @@ import torch
 import torch.nn as nn
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 1. 1D-CNN U-Net
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class ConvBlock(nn.Module):
     def __init__(self, in_ch, out_ch, kernel_size=5):
@@ -88,9 +88,9 @@ class UNet1D(nn.Module):
         return out
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 2. LSTM/GRU Seq2Seq (non-autoregressive, full-sequence visible)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class LSTMSeq2Seq(nn.Module):
     def __init__(self, in_channels: int = 4, out_channels: int = 1,
@@ -121,9 +121,9 @@ class LSTMSeq2Seq(nn.Module):
         return out.permute(0, 2, 1)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 3. Bidirectional LSTM (simple, strong RNN baseline)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class BiLSTM(nn.Module):
     def __init__(self, in_channels: int = 4, out_channels: int = 1,
@@ -146,9 +146,9 @@ class BiLSTM(nn.Module):
         return out.permute(0, 2, 1)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 4. Temporal Convolutional Network (dilated, non-causal)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class TCNBlock(nn.Module):
     def __init__(self, in_ch, out_ch, kernel_size, dilation, dropout=0.1):
@@ -192,9 +192,9 @@ class TCN(nn.Module):
         return self.head(out)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 5. Transformer Encoder (full sequence visible, no causal mask)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, max_len: int = 500):
@@ -234,9 +234,9 @@ class TransformerSeq2Seq(nn.Module):
         return out.permute(0, 2, 1)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 6. Conv-LSTM hybrid (CNN feature extractor + BiLSTM)
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 class ConvLSTM(nn.Module):
     def __init__(self, in_channels: int = 4, out_channels: int = 1,
@@ -267,10 +267,10 @@ class ConvLSTM(nn.Module):
         return out.permute(0, 2, 1)
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # 7. TCN Classifier for sepsis prediction
-#    Reuses TCNBlock backbone — demographics injected after last timestep
-# ════════════════════════════════════════════════════════════════════════
+#    Reuses TCNBlock backbone - demographics injected after last timestep
+# ========================================================================
 
 class TCNClassifier(nn.Module):
     """
@@ -303,7 +303,7 @@ class TCNClassifier(nn.Module):
                  dropout: float = 0.1, mlp_hidden: int = 64):
         super().__init__()
 
-        # ── TCN backbone (identical structure to TCN reconstruction model) ──
+        # -- TCN backbone (identical structure to TCN reconstruction model) --
         layers = []
         ch = n_vitals
         for i, out_ch in enumerate(channels):
@@ -314,7 +314,7 @@ class TCNClassifier(nn.Module):
         self.tcn_out_ch  = ch   # = channels[-1]
         self.n_demo      = n_demo
 
-        # ── MLP classification head ──────────────────────────────────────
+        # -- MLP classification head --------------------------------------
         mlp_in = self.tcn_out_ch + n_demo
         self.classifier = nn.Sequential(
             nn.Linear(mlp_in,          mlp_hidden),
@@ -331,11 +331,11 @@ class TCNClassifier(nn.Module):
         Parameters
         ----------
         vitals : (B, n_vitals, T)
-        demo   : (B, n_demo)  — or None if no demographics
+        demo   : (B, n_demo)  - or None if no demographics
 
         Returns
         -------
-        logits : (B,)  — pass through sigmoid for probabilities
+        logits : (B,)  - pass through sigmoid for probabilities
         """
         feat = self.backbone(vitals)          # (B, channels[-1], T)
         last = feat[:, :, -1]                # (B, channels[-1])  ← last timestep
@@ -347,9 +347,9 @@ class TCNClassifier(nn.Module):
         return logits
 
 
-# ════════════════════════════════════════════════════════════════════════
-# Registry — swap models by name from train.py
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
+# Registry - swap models by name from train.py
+# ========================================================================
 
 MODEL_REGISTRY = {
     "unet1d":       UNet1D,

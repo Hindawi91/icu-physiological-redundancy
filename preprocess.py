@@ -33,18 +33,18 @@ import pandas as pd
 from pathlib import Path
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Config
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 VITAL_COLS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp"]
 DEMO_COLS  = ["Age", "Gender", "ICULOS", "HospAdmTime"]
 LABEL_COL  = "SepsisLabel"
 SEED       = 42
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Loading
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def load_psv_files(data_dir, hospital_label):
     """
     Load all .psv files from a PhysioNet 2019 hospital directory.
@@ -74,9 +74,9 @@ def load_psv_files(data_dir, hospital_label):
     return combined
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Imputation
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def forward_fill_within_patient(df, cols):
     """
     Forward-fill missing values within each patient stay,
@@ -102,9 +102,9 @@ def fill_remaining_with_mean(df, cols):
     return df
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Splitting
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def stratified_patient_split(df, val_frac=0.15, test_frac=0.15, seed=42):
     """
     Patient-level stratified split by Hospital + SepsisLabel.
@@ -140,13 +140,13 @@ def stratified_patient_split(df, val_frac=0.15, test_frac=0.15, seed=42):
     return df_train, df_val, df_test
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def main(args):
     os.makedirs(args.out_dir, exist_ok=True)
 
-    # ── 1. Load raw data ──────────────────────────────────────────────
+    # -- 1. Load raw data ----------------------------------------------
     print("\nStep 1: Loading raw PhysioNet 2019 data...")
     df_a = load_psv_files(
         os.path.join(args.data_dir, "training_setA"), "A")
@@ -156,12 +156,12 @@ def main(args):
     print(f"\n  Combined: {df['Patient_ID'].nunique():,} patients, "
           f"{len(df):,} rows")
 
-    # ── 2. Drop EtCO2 (>99% missing in Hospital A) ───────────────────
+    # -- 2. Drop EtCO2 (>99% missing in Hospital A) -------------------
     print("\nStep 2: Dropping EtCO2 (>99% missing in Hospital A)...")
     if "EtCO2" in df.columns:
         df = df.drop(columns=["EtCO2"])
 
-    # ── 3. Report missingness ─────────────────────────────────────────
+    # -- 3. Report missingness -----------------------------------------
     print("\nStep 3: Missingness in vital sign columns:")
     keep_cols = VITAL_COLS + DEMO_COLS + [LABEL_COL, "Patient_ID", "Hour", "Hospital"]
     df        = df[[c for c in keep_cols if c in df.columns]]
@@ -170,20 +170,20 @@ def main(args):
         pct = df[col].isna().mean() * 100
         print(f"  {col:<10}: {pct:.1f}% missing")
 
-    # ── 4. Forward-fill imputation ────────────────────────────────────
+    # -- 4. Forward-fill imputation ------------------------------------
     print("\nStep 4: Forward-fill imputation within patient stays...")
     df = forward_fill_within_patient(df, VITAL_COLS)
 
-    # ── 5. Fill remaining with column mean ────────────────────────────
+    # -- 5. Fill remaining with column mean ----------------------------
     print("\nStep 5: Filling remaining NaNs with column mean...")
     df = fill_remaining_with_mean(df, VITAL_COLS)
 
     # Verify no missing vital signs remain
     remaining = df[VITAL_COLS].isna().sum().sum()
     assert remaining == 0, f"Still {remaining} missing values after imputation!"
-    print(f"  ✅ No missing values remain in vital sign columns")
+    print(f"  No missing values remain in vital sign columns")
 
-    # ── 6. Patient-level stratified split ────────────────────────────
+    # -- 6. Patient-level stratified split ----------------------------
     print("\nStep 6: Splitting into train/val/test...")
     df_train, df_val, df_test = stratified_patient_split(
         df, val_frac=0.15, test_frac=0.15, seed=SEED)
@@ -197,7 +197,7 @@ def main(args):
         print(f"  {name:5s}: {n_pat:6,} patients  "
               f"({n_sepsis:,} sepsis, {pct_sep:.1f}%)  → {out_path}")
 
-    # ── 7. Summary ────────────────────────────────────────────────────
+    # -- 7. Summary ----------------------------------------------------
     print(f"\n{'='*55}")
     print(f"  Preprocessing complete.")
     print(f"  Output directory: {args.out_dir}")

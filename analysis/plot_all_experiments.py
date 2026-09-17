@@ -5,7 +5,7 @@ Generates the comprehensive ALL_experiments figure (15 rows × 6 cols)
 with different random seeds for patient window selection.
 
 Each seed produces a different set of example patients while using
-the same trained model predictions — useful for picking the most
+the same trained model predictions - useful for picking the most
 visually informative version for the paper.
 
 Usage:
@@ -30,9 +30,9 @@ from torch.utils.data import DataLoader
 
 from models import build_model, MODEL_REGISTRY
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Config
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 TEST_PATH      = "checkpoints/splits/test.csv"
 TRAIN_PATH     = "checkpoints/splits/train.csv"
@@ -96,9 +96,9 @@ UNITS = {
 }
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Helpers
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 def make_windows(df, input_cols, target_cols):
     X_list, y_list, meta = [], [], []
@@ -154,9 +154,9 @@ class NumpyLinReg:
         return X @ self.coef_.T + self.intercept_
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main figure function
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 def pick_best_windows(y_true, preds_dict, indices, n=2):
     """
@@ -196,7 +196,7 @@ def make_page_figure(exp_subset, seed, device, df_test, model_cache,
                              top=0.93, bottom=0.04)
 
     title = (
-        "Reconstruction of ICU Vital Signs — "
+        "Reconstruction of ICU Vital Signs - "
         f"15 Experimental Configurations  (Page {page_num}/{n_pages})\n"
         "True signal (black) vs. model predictions  |  "
         "Left 2 cols: Non-sepsis patients  |  Right 2 cols: Sepsis patients"
@@ -340,9 +340,9 @@ def generate_figure(seed, device, df_test, df_train, model_cache):
     print(f"  \u2705 Saved 3-page PDF: {pdf_path}")
 
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -362,12 +362,12 @@ if __name__ == "__main__":
     print(f"Seeds     : {seeds}")
     print(f"Cache dir : {args.cache_dir}")
 
-    # ── Load data once ────────────────────────────────────────────────
+    # -- Load data once ------------------------------------------------
     print("\nLoading data...")
     df_test  = pd.read_csv(TEST_PATH)
     df_train = pd.read_csv(TRAIN_PATH)
 
-    # ── Inference with caching ────────────────────────────────────────
+    # -- Inference with caching ----------------------------------------
     model_cache = {}
 
     for exp in EXPERIMENTS:
@@ -404,13 +404,13 @@ if __name__ == "__main__":
         save_dict = {k: v for k, v in dl_preds.items()}
         save_dict["y_test"] = y_test
         np.savez(cache_file, **save_dict)
-        print(f"    ✅ Cache saved: {cache_file}")
+        print(f"    Cache saved: {cache_file}")
 
-    # ── Generate one figure per seed ──────────────────────────────────
+    # -- Generate one figure per seed ----------------------------------
     print(f"\nGenerating {len(seeds)} figure(s)...")
     for seed in seeds:
         generate_figure(seed, device, df_test, df_train, model_cache)
 
-    print("\n✅ Done.")
+    print("\nDone.")
     for seed in seeds:
         print(f"   paper_figures/ALL_experiments_seed{seed}.pdf")

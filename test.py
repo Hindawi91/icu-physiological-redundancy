@@ -18,9 +18,9 @@ import torch
 from torch.utils.data import DataLoader
 from models import build_model, MODEL_REGISTRY
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Config
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 TEST_PATH      = "checkpoints/splits/test.csv"
 TRAIN_PATH     = "checkpoints/splits/train.csv"
 CHECKPOINT_DIR = "checkpoints/models"
@@ -51,18 +51,18 @@ LINE_STYLES = {
     "LinearRegression": "--",
 }
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Reproducibility
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def set_seed(seed=DEFAULT_SEED):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Data
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def make_windows_with_meta(df, input_cols, target_cols, demo_cols=None,
                             window_size=WINDOW_SIZE, step=STEP):
     X_list, y_list, meta = [], [], []
@@ -96,9 +96,9 @@ def make_windows_with_meta(df, input_cols, target_cols, demo_cols=None,
     meta = pd.DataFrame(meta)
     return X, y, meta
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Metrics
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def compute_metrics(pred, true):
     """Compute metrics over all channels flattened together."""
     pred = pred.flatten()
@@ -150,9 +150,9 @@ def compute_per_patient_metrics(preds, y_true, meta):
         results.append(compute_metrics(p, t))
     return results
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Deep learning inference
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def load_model(model_name, run_tag, in_ch, out_ch, device):
     ckpt_path = os.path.join(CHECKPOINT_DIR, f"{model_name}_{run_tag}_best.pt")
     if not os.path.exists(ckpt_path):
@@ -175,9 +175,9 @@ def run_dl_inference(model, X, device, batch_size=256):
     preds = np.concatenate(preds, axis=0)
     return preds.transpose(0, 2, 1)   # (N, T, C_out)
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Simple baselines
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 class NumpyLinearRegression:
     def fit(self, X, y):
         X_b = np.hstack([X, np.ones((X.shape[0], 1))])
@@ -212,27 +212,27 @@ def run_baselines(X_train, y_train, X_test, y_test):
             lr_model.predict(X_test.reshape(-1, C)).reshape(N, T, out_ch),
     }
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Print and save metrics
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def print_and_save_metrics(all_metrics, all_preds, y_test, meta,
                             target_cols, target_tag, run_tag):
     metric_keys = ["MSE", "RMSE", "MAE", "MAPE", "Pearson_r"]
     is_multitarget = len(target_cols) > 1
 
-    # ── Window-level (all channels combined) ─────────────────────────────
+    # -- Window-level (all channels combined) -----------------------------
     df = pd.DataFrame(all_metrics).T[metric_keys].round(4).sort_values("RMSE")
     print(f"\n{'='*65}")
-    print(f"  Window-Level Metrics — Target: {target_tag}")
+    print(f"  Window-Level Metrics - Target: {target_tag}")
     print(f"  {'(combined across all channels)' if is_multitarget else ''}")
     print(f"{'='*65}")
     print(df.to_string())
     df.to_csv(os.path.join(RESULTS_DIR, f"metrics_{run_tag}.csv"))
 
-    # ── Per-channel metrics (only for multi-target) ───────────────────────
+    # -- Per-channel metrics (only for multi-target) -----------------------
     if is_multitarget:
         print(f"\n{'='*65}")
-        print(f"  Per-Channel Metrics — Target: {target_tag}")
+        print(f"  Per-Channel Metrics - Target: {target_tag}")
         print(f"{'='*65}")
 
         per_channel_rows = []
@@ -250,10 +250,10 @@ def print_and_save_metrics(all_metrics, all_preds, y_test, meta,
         ch_df.to_csv(
             os.path.join(RESULTS_DIR, f"metrics_per_channel_{run_tag}.csv"),
             index=False)
-        print(f"\n✅ Per-channel metrics saved: "
+        print(f"\nPer-channel metrics saved: "
               f"results/metrics_per_channel_{run_tag}.csv")
 
-    # ── Per-patient (combined) ────────────────────────────────────────────
+    # -- Per-patient (combined) --------------------------------------------
     summary_rows = []
     for name, preds in all_preds.items():
         results = compute_per_patient_metrics(preds, y_test, meta)
@@ -266,7 +266,7 @@ def print_and_save_metrics(all_metrics, all_preds, y_test, meta,
 
     pat_df = pd.DataFrame(summary_rows).set_index("Model").sort_values("RMSE_mean")
     print(f"\n{'='*65}")
-    print(f"  Per-Patient Metrics (mean ± std) — Target: {target_tag}")
+    print(f"  Per-Patient Metrics (mean ± std) - Target: {target_tag}")
     print(f"{'='*65}")
     print(f"\n{'Model':<22}", end="")
     for k in metric_keys:
@@ -281,9 +281,9 @@ def print_and_save_metrics(all_metrics, all_preds, y_test, meta,
     pat_df.to_csv(os.path.join(RESULTS_DIR,
                                f"metrics_per_patient_{run_tag}.csv"))
 
-    # ── Subgroup analysis ─────────────────────────────────────────────────
+    # -- Subgroup analysis -------------------------------------------------
     print(f"\n{'='*65}")
-    print(f"  Subgroup Analysis (Sepsis vs Healthy) — Target: {target_tag}")
+    print(f"  Subgroup Analysis (Sepsis vs Healthy) - Target: {target_tag}")
     print(f"{'='*65}")
     subgroup_rows = []
     for label_sg, flag in [("Healthy", 0), ("Sepsis", 1)]:
@@ -301,11 +301,11 @@ def print_and_save_metrics(all_metrics, all_preds, y_test, meta,
     pd.DataFrame(subgroup_rows).to_csv(
         os.path.join(RESULTS_DIR, f"metrics_subgroup_{run_tag}.csv"),
         index=False)
-    print(f"\n✅ Metrics saved to results/")
+    print(f"\nMetrics saved to results/")
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Visualization
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def plot_samples(y_true, all_preds, meta, target_cols, target_tag, run_tag,
                  n_samples=9):
     hours = np.arange(WINDOW_SIZE)
@@ -318,7 +318,7 @@ def plot_samples(y_true, all_preds, meta, target_cols, target_tag, run_tag,
     for t_idx, t_name in enumerate(target_cols):
         fig = plt.figure(figsize=(36, 18))
         fig.suptitle(
-            f"{t_name} Reconstruction — All Models vs Ground Truth\n"
+            f"{t_name} Reconstruction - All Models vs Ground Truth\n"
             f"Solid: Deep Learning  |  Dashed: Simple Baselines\n"
             f"Left: Healthy  |  Right: Sepsis",
             fontsize=14, fontweight="bold", y=1.02
@@ -357,11 +357,11 @@ def plot_samples(y_true, all_preds, meta, target_cols, target_tag, run_tag,
         save_path = os.path.join(RESULTS_DIR, f"visual_{t_name}_{run_tag}.png")
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
         plt.close()
-        print(f"✅ Visual saved to {save_path}")
+        print(f"Visual saved to {save_path}")
 
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 # Main
-# ════════════════════════════════════════════════════════════════════════
+# ========================================================================
 def main(args):
     set_seed(DEFAULT_SEED)
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -398,7 +398,7 @@ def main(args):
     if out_ch > 1:
         print(f"Multi-target : per-channel metrics will also be saved")
 
-    # ── Load data ─────────────────────────────────────────────────────────
+    # -- Load data ---------------------------------------------------------
     df_train = pd.read_csv(TRAIN_PATH)
     df_test  = pd.read_csv(TEST_PATH)
 
@@ -413,15 +413,15 @@ def main(args):
     all_preds   = {}
     all_metrics = {}
 
-    # ── Deep learning models ──────────────────────────────────────────────
+    # -- Deep learning models ----------------------------------------------
     if not args.baselines_only:
         models_to_run = list(MODEL_REGISTRY.keys()) if args.all_models \
                         else [args.model]
-        print("── Deep Learning Models ─────────────────────────────────────")
+        print("-- Deep Learning Models -------------------------------------")
         for name in models_to_run:
             model = load_model(name, run_tag, in_ch, out_ch, device)
             if model is None:
-                print(f"   ⚠️  {name}: checkpoint not found — skipping")
+                print(f"   {name}: checkpoint not found - skipping")
                 continue
             preds = run_dl_inference(model, X_test, device)
             all_preds[name]   = preds
@@ -430,9 +430,9 @@ def main(args):
             print(f"   {name:<20} RMSE={m['RMSE']:.4f}  MAE={m['MAE']:.4f}  "
                   f"MAPE={m['MAPE']:.2f}%  r={m['Pearson_r']:.4f}")
 
-    # ── Simple baselines ──────────────────────────────────────────────────
+    # -- Simple baselines --------------------------------------------------
     if not args.no_baselines:
-        print("\n── Simple Baselines ─────────────────────────────────────────")
+        print("\n-- Simple Baselines -----------------------------------------")
         for name, preds in run_baselines(X_train, y_train, X_test, y_test).items():
             all_preds[name]   = preds
             all_metrics[name] = compute_metrics(preds, y_test)
@@ -440,11 +440,11 @@ def main(args):
             print(f"   {name:<20} RMSE={m['RMSE']:.4f}  MAE={m['MAE']:.4f}  "
                   f"MAPE={m['MAPE']:.2f}%  r={m['Pearson_r']:.4f}")
 
-    # ── Metrics tables ────────────────────────────────────────────────────
+    # -- Metrics tables ----------------------------------------------------
     print_and_save_metrics(all_metrics, all_preds, y_test, meta,
                             target_cols, target_tag, run_tag)
 
-    # ── Visual ────────────────────────────────────────────────────────────
+    # -- Visual ------------------------------------------------------------
     if not args.no_plots:
         plot_samples(y_test, all_preds, meta, target_cols, target_tag, run_tag)
 

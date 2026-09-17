@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Data: PhysioNet 2019](https://img.shields.io/badge/Data-PhysioNet%202019-lightblue.svg)](https://physionet.org/content/challenge-2019/1.0.0/)
 
-> 📄 **Paper coming soon**
+> **Paper coming soon**
 
 ---
 
@@ -32,7 +32,7 @@ Official code for:
 ## Overview
 
 This repository investigates **physiological information redundancy** in ICU
-vital sign monitoring — the extent to which one physiological modality can be
+vital sign monitoring - the extent to which one physiological modality can be
 reconstructed from the remaining monitored signals while preserving downstream
 clinical information.
 
@@ -272,7 +272,7 @@ If you use this code or results in your research, please cite:
 
 ## License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
 
 The PhysioNet 2019 dataset is subject to its own
 [data use agreement](https://physionet.org/content/challenge-2019/1.0.0/).
@@ -281,9 +281,9 @@ The PhysioNet 2019 dataset is subject to its own
 
 ## Contact
 
-Firas Al-Hindawi — King Fahd University of Petroleum and Minerals
-📧 firas.hindawi@kfupm.edu.sa
-🔗 [GitHub](https://github.com/Hindawi91)
+Firas Al-Hindawi - King Fahd University of Petroleum and Minerals
+firas.hindawi@kfupm.edu.sa
+[GitHub](https://github.com/Hindawi91)
 
 
 ---
